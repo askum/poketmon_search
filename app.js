@@ -696,34 +696,38 @@ class PokedexApp {
         </h2>
 
         <!-- 타입 뱃지 -->
-        <div class="flex gap-2 mb-3">
+        <div class="flex gap-2 mb-2">
           ${typeBadges}
         </div>
 
-        <!-- 한국어 읽기 (글자 표시) -->
-        <div id="modalKoCryBadge" 
-             class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-sm border border-slate-200/80 dark:border-slate-700 text-xs font-extrabold mb-1 transition-all">
-          <span class="text-xs">💬</span>
-          <span class="text-slate-400 dark:text-slate-500 font-medium text-[11px]">한국어 소리:</span>
-          <span class="text-red-500 dark:text-red-400 tracking-tight">"${koCryPhrase}"</span>
-        </div>
-
-        <!-- 메인 고화질 일러스트 -->
-        <div class="relative w-52 h-52 flex items-center justify-center">
+        <!-- 메인 고화질 일러스트 및 한국어 말풍선 영역 -->
+        <div class="relative w-56 h-56 flex items-center justify-center">
+          <!-- 상단 팝업 만화 말풍선 -->
+          <div id="modalComicBubble" class="comic-bubble hidden">
+            <span class="text-xs sm:text-sm font-black text-red-500 dark:text-red-400 whitespace-nowrap">"${koCryPhrase}"</span>
+          </div>
           <img id="modalPokemonImg"
                src="${imgUrl}" 
                class="w-48 h-48 object-contain filter drop-shadow-xl transition-transform duration-300" 
                alt="${basic.name}" />
         </div>
 
-        <!-- 닌텐도 공식 울음소리 재생 버튼 -->
-        <button id="modalCryBtn" 
-                class="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-red-400 hover:text-red-500 transition-all transform hover:scale-105 active:scale-95">
-          <svg class="w-4 h-4 fill-current text-red-500" viewBox="0 0 24 24">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-          </svg>
-          <span id="cryLabel">공식 울음소리 재생</span>
-        </button>
+        <!-- 하단 액션 버튼 그룹 -->
+        <div class="mt-2 flex items-center gap-2.5">
+          <!-- 1. 한국어 버튼 (클릭 시 상단에 만화 애니메이션 말풍선 표시) -->
+          <button id="modalKoBubbleBtn" 
+                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black bg-red-500 hover:bg-red-600 active:scale-95 text-white shadow-sm transition-all transform hover:scale-105">
+            <span>💬</span>
+            <span>한국어</span>
+          </button>
+
+          <!-- 2. 닌텐도 공식 원작 울음소리 오디오 재생 버튼 -->
+          <button id="modalCryBtn" 
+                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-400 transition-all transform hover:scale-105 active:scale-95">
+            <span>🔊</span>
+            <span id="cryLabel">원작 울음소리</span>
+          </button>
+        </div>
       </div>
 <!-- 모달 본문 상세 내용 -->
       <div class="p-6 space-y-5">
@@ -774,10 +778,37 @@ class PokedexApp {
       </div>
     `;
 
-    // 닌텐도 공식 울음소리 재생 이벤트 바인딩
+    // [한국어] 버튼 클릭 시 위에 만화 말풍선 애니메이션 & 포켓몬 점프 연출
+    const koBubbleBtn = document.getElementById('modalKoBubbleBtn');
+    const comicBubble = document.getElementById('modalComicBubble');
+    const pokemonImg = document.getElementById('modalPokemonImg');
+    let bubbleTimer = null;
+
+    koBubbleBtn.addEventListener('click', () => {
+      clearTimeout(bubbleTimer);
+
+      // 애니메이션 재실행을 위한 클래스 리셋
+      comicBubble.classList.remove('hidden');
+      comicBubble.style.animation = 'none';
+      void comicBubble.offsetWidth; // reflow 강제
+      comicBubble.style.animation = '';
+
+      if (pokemonImg) {
+        pokemonImg.classList.remove('pokemon-jumping');
+        void pokemonImg.offsetWidth;
+        pokemonImg.classList.add('pokemon-jumping');
+      }
+
+      // 3초 후 부드럽게 사라지기
+      bubbleTimer = setTimeout(() => {
+        comicBubble.classList.add('hidden');
+        if (pokemonImg) pokemonImg.classList.remove('pokemon-jumping');
+      }, 3000);
+    });
+
+    // 닌텐도 공식 원작 울음소리 재생 이벤트 바인딩
     const cryBtn = document.getElementById('modalCryBtn');
     const cryLabel = document.getElementById('cryLabel');
-    const pokemonImg = document.getElementById('modalPokemonImg');
 
     cryBtn.addEventListener('click', () => {
       if (this.currentAudio) {
@@ -787,10 +818,6 @@ class PokedexApp {
       this.currentAudio = new Audio(details.cryUrl);
       cryBtn.classList.add('playing-sound');
       if (pokemonImg) pokemonImg.classList.add('scale-105');
-      const koBadge = document.getElementById('modalKoCryBadge');
-      if (koBadge) {
-        koBadge.classList.add('scale-110', 'border-red-400', 'ring-2', 'ring-red-400/20');
-      }
       cryLabel.textContent = '재생 중...';
 
       this.currentAudio.play().catch(e => {
@@ -800,11 +827,7 @@ class PokedexApp {
       this.currentAudio.onended = () => {
         cryBtn.classList.remove('playing-sound');
         if (pokemonImg) pokemonImg.classList.remove('scale-105');
-        const koBadge = document.getElementById('modalKoCryBadge');
-        if (koBadge) {
-          koBadge.classList.remove('scale-110', 'border-red-400', 'ring-2', 'ring-red-400/20');
-        }
-        cryLabel.textContent = '공식 울음소리 재생';
+        cryLabel.textContent = '원작 울음소리';
       };
     });
   }
