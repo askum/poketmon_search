@@ -48,6 +48,66 @@ const STAT_LABELS = {
   speed: { name: '스피드', color: '#ec4899' }
 };
 
+// 포켓몬 한국어 울음소리(애니메이션 더빙 대사) 텍스트 매핑
+const SPECIAL_KO_CRYS = {
+  '이상해씨': '이상~ 이상해씨!',
+  '이상해풀': '이상~ 풀!',
+  '이상해꽃': '이상~ 해꽃!',
+  '파이리': '파이, 파이리!',
+  '리자드': '리자~드!',
+  '리자몽': '크아아앙! 리자몽!',
+  '꼬부기': '꼬북! 꼬부기!',
+  '어니부기': '어니, 부기!',
+  '거북왕': '거북! 거북왕!',
+  '캐터피': '캐터, 캐터피!',
+  '버터플': '버터~ 플!',
+  '피죤투': '피죠오온!',
+  '피카츄': '피카, 피카츄!',
+  '라이츄': '라이~ 츄!',
+  '삐삐': '삐! 삐삐~!',
+  '푸린': '푸~ 푸르르 푸린!',
+  '고라파덕': '파덕? 골~파덕!',
+  '냐옹': '냐~옹이다옹!',
+  '발챙이': '발챙! 발챙이!',
+  '야돈': '야~~~돈...',
+  '팬텀': '팬~ 텀!',
+  '탕구리': '탕구, 탕구리!',
+  '또가스': '또~가스!',
+  '또도가스': '또도~가스!',
+  '마임맨': '마임~ 마임!',
+  '잉어킹': '파닥파닥! 잉어킹!',
+  '이브이': '이~브이!',
+  '잠만보': '쿠우우... 잠~만보...',
+  '프리져': '프리~져!',
+  '썬더': '썬~더!',
+  '파이어': '파이~어!',
+  '망나뇽': '망나~뇽!',
+  '뮤츠': '뮤츠...!',
+  '뮤': '뮤~!',
+  '치코리타': '치코! 치코리타!',
+  '브케인': '브케, 브케인!',
+  '리아코': '리아! 리아코!',
+  '토게피': '토게토게~ 프리!',
+  '마자용': '마~~~~~자용!',
+  '루기아': '루기아~!',
+  '칠색조': '칠색조~!',
+  '세레비': '세레~비!',
+  '나무지기': '나무! 지기!',
+  '아차모': '아차, 아차모!',
+  '물짱이': '물짱, 물짱이!',
+  '모부기': '모북! 모부기!',
+  '불꽃숭이': '숭이! 불꽃숭이!',
+  '팽도리': '팽돌! 팽도리!',
+  '따라큐': '따라~ 큐!'
+};
+
+function getKoreanPokemonCryText(name) {
+  if (SPECIAL_KO_CRYS[name]) return SPECIAL_KO_CRYS[name];
+  if (name.length <= 2) return `${name}! ${name}~!`;
+  if (name.length === 3) return `${name.slice(0, 2)}! ${name}~!`;
+  return `${name.slice(0, 2)}~ ${name}!`;
+}
+
 class PokedexApp {
   constructor() {
     this.allPokemon = [];
@@ -602,6 +662,7 @@ class PokedexApp {
 
     // 종족값 총합 계산
     const statTotal = details.stats.reduce((acc, s) => acc + s.base, 0);
+    const koCryPhrase = getKoreanPokemonCryText(basic.name);
 
     const statsHtml = details.stats.map(s => {
       const info = STAT_LABELS[s.key] || { name: s.key, color: '#64748b' };
@@ -635,8 +696,16 @@ class PokedexApp {
         </h2>
 
         <!-- 타입 뱃지 -->
-        <div class="flex gap-2 mb-4">
+        <div class="flex gap-2 mb-3">
           ${typeBadges}
+        </div>
+
+        <!-- 한국어 읽기 (글자 표시) -->
+        <div id="modalKoCryBadge" 
+             class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/90 dark:bg-slate-800/90 shadow-sm border border-slate-200/80 dark:border-slate-700 text-xs font-extrabold mb-1 transition-all">
+          <span class="text-xs">💬</span>
+          <span class="text-slate-400 dark:text-slate-500 font-medium text-[11px]">한국어 소리:</span>
+          <span class="text-red-500 dark:text-red-400 tracking-tight">"${koCryPhrase}"</span>
         </div>
 
         <!-- 메인 고화질 일러스트 -->
@@ -718,6 +787,10 @@ class PokedexApp {
       this.currentAudio = new Audio(details.cryUrl);
       cryBtn.classList.add('playing-sound');
       if (pokemonImg) pokemonImg.classList.add('scale-105');
+      const koBadge = document.getElementById('modalKoCryBadge');
+      if (koBadge) {
+        koBadge.classList.add('scale-110', 'border-red-400', 'ring-2', 'ring-red-400/20');
+      }
       cryLabel.textContent = '재생 중...';
 
       this.currentAudio.play().catch(e => {
@@ -727,6 +800,10 @@ class PokedexApp {
       this.currentAudio.onended = () => {
         cryBtn.classList.remove('playing-sound');
         if (pokemonImg) pokemonImg.classList.remove('scale-105');
+        const koBadge = document.getElementById('modalKoCryBadge');
+        if (koBadge) {
+          koBadge.classList.remove('scale-110', 'border-red-400', 'ring-2', 'ring-red-400/20');
+        }
         cryLabel.textContent = '공식 울음소리 재생';
       };
     });
