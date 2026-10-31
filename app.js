@@ -700,34 +700,22 @@ class PokedexApp {
           ${typeBadges}
         </div>
 
-        <!-- 메인 고화질 일러스트 및 한국어 말풍선 영역 -->
-        <div class="relative w-56 h-56 flex items-center justify-center">
+        <!-- 메인 고화질 일러스트 및 한국어 말풍선 영역 (터치 인터랙션) -->
+        <div id="modalPokemonTouchArea" 
+             title="터치해보세요!" 
+             class="relative w-56 h-56 flex items-center justify-center cursor-pointer select-none group">
           <!-- 상단 팝업 만화 말풍선 -->
           <div id="modalComicBubble" class="comic-bubble hidden">
             <span class="text-xs sm:text-sm font-black text-red-500 dark:text-red-400 whitespace-nowrap">"${koCryPhrase}"</span>
           </div>
           <img id="modalPokemonImg"
                src="${imgUrl}" 
-               class="w-48 h-48 object-contain filter drop-shadow-xl transition-transform duration-300" 
+               class="w-48 h-48 object-contain filter drop-shadow-xl transition-all duration-300 group-hover:scale-105 active:scale-95" 
                alt="${basic.name}" />
         </div>
-
-        <!-- 하단 액션 버튼 그룹 -->
-        <div class="mt-2 flex items-center gap-2.5">
-          <!-- 1. 한국어 버튼 (클릭 시 상단에 만화 애니메이션 말풍선 표시) -->
-          <button id="modalKoBubbleBtn" 
-                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-black bg-red-500 hover:bg-red-600 active:scale-95 text-white shadow-sm transition-all transform hover:scale-105">
-            <span>💬</span>
-            <span>한국어</span>
-          </button>
-
-          <!-- 2. 닌텐도 공식 원작 울음소리 오디오 재생 버튼 -->
-          <button id="modalCryBtn" 
-                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-slate-400 transition-all transform hover:scale-105 active:scale-95">
-            <span>🔊</span>
-            <span id="cryLabel">원작 울음소리</span>
-          </button>
-        </div>
+        <p class="text-[11px] text-slate-400 dark:text-slate-500 font-medium -mt-1 select-none">
+          포켓몬을 터치해보세요! 👆
+        </p>
       </div>
 <!-- 모달 본문 상세 내용 -->
       <div class="p-6 space-y-5">
@@ -763,73 +751,42 @@ class PokedexApp {
           </div>
         </div>
 
-        <!-- 나무위키 바로가기 외부 링크 버튼 -->
-        <div class="pt-2 text-center">
-          <a href="https://namu.wiki/w/${encodeURIComponent(basic.name)}" 
-             target="_blank" 
-             rel="noopener noreferrer" 
-             class="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
-            <span>나무위키에서 자세히 보기</span>
-            <svg class="w-3.5 h-3.5 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
-        </div>
+
       </div>
     `;
 
-    // [한국어] 버튼 클릭 시 위에 만화 말풍선 애니메이션 & 포켓몬 점프 연출
-    const koBubbleBtn = document.getElementById('modalKoBubbleBtn');
+    // 포켓몬 캐릭터 클릭(터치) 시 머리 위 만화 말풍선 애니메이션 & 점프 연출
+    const touchArea = document.getElementById('modalPokemonTouchArea');
     const comicBubble = document.getElementById('modalComicBubble');
     const pokemonImg = document.getElementById('modalPokemonImg');
     let bubbleTimer = null;
 
-    koBubbleBtn.addEventListener('click', () => {
+    const triggerPokemonReaction = () => {
       clearTimeout(bubbleTimer);
 
-      // 애니메이션 재실행을 위한 클래스 리셋
+      // 말풍선 팝 애니메이션 리셋 및 재실행
       comicBubble.classList.remove('hidden');
       comicBubble.style.animation = 'none';
-      void comicBubble.offsetWidth; // reflow 강제
+      void comicBubble.offsetWidth;
       comicBubble.style.animation = '';
 
+      // 캐릭터 점프 애니메이션
       if (pokemonImg) {
         pokemonImg.classList.remove('pokemon-jumping');
         void pokemonImg.offsetWidth;
         pokemonImg.classList.add('pokemon-jumping');
       }
 
-      // 3초 후 부드럽게 사라지기
+      // 3초 후 부드럽게 숨김
       bubbleTimer = setTimeout(() => {
         comicBubble.classList.add('hidden');
         if (pokemonImg) pokemonImg.classList.remove('pokemon-jumping');
       }, 3000);
-    });
+    };
 
-    // 닌텐도 공식 원작 울음소리 재생 이벤트 바인딩
-    const cryBtn = document.getElementById('modalCryBtn');
-    const cryLabel = document.getElementById('cryLabel');
-
-    cryBtn.addEventListener('click', () => {
-      if (this.currentAudio) {
-        this.currentAudio.pause();
-        this.currentAudio.currentTime = 0;
-      }
-      this.currentAudio = new Audio(details.cryUrl);
-      cryBtn.classList.add('playing-sound');
-      if (pokemonImg) pokemonImg.classList.add('scale-105');
-      cryLabel.textContent = '재생 중...';
-
-      this.currentAudio.play().catch(e => {
-        console.warn('Audio play failed:', e);
-      });
-
-      this.currentAudio.onended = () => {
-        cryBtn.classList.remove('playing-sound');
-        if (pokemonImg) pokemonImg.classList.remove('scale-105');
-        cryLabel.textContent = '원작 울음소리';
-      };
-    });
+    if (touchArea) {
+      touchArea.addEventListener('click', triggerPokemonReaction);
+    }
   }
 }
 
