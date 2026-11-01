@@ -192,6 +192,8 @@ class PokedexApp {
     this.loadMoreContainer = document.getElementById('loadMoreContainer');
     this.loadMoreBtn = document.getElementById('loadMoreBtn');
     this.themeToggleBtn = document.getElementById('themeToggleBtn');
+    this.refreshBtn = document.getElementById('refreshBtn');
+    this.refreshIcon = document.getElementById('refreshIcon');
     this.scrollTopBtn = document.getElementById('scrollTopBtn');
     
     // 모달 요소들
@@ -203,6 +205,21 @@ class PokedexApp {
   }
 
   bindEvents() {
+    // 갱신 (캐시 무효화 강제 새로고침)
+    if (this.refreshBtn) {
+      this.refreshBtn.addEventListener('click', () => {
+        if (this.refreshIcon) {
+          this.refreshIcon.classList.add('animate-spin');
+        }
+        // 브라우저 캐시 무효화를 위한 타임스탬프 파라미터 적용
+        const url = new URL(window.location.href);
+        url.searchParams.set('reload', Date.now());
+        setTimeout(() => {
+          window.location.replace(url.toString());
+        }, 150);
+      });
+    }
+
     // 테마 토글
     this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
 
