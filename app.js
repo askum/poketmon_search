@@ -648,6 +648,127 @@ class PokedexApp {
     `;
   }
 
+  buildEvolutionHtml(basic) {
+    if (!basic.chainId) {
+      return `
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">진화 정보</h4>
+          <p class="text-xs text-slate-400 font-medium">진화 단계가 없는 단일 포켓몬입니다.</p>
+        </div>
+      `;
+    }
+
+    const members = this.allPokemon.filter(p => p.chainId === basic.chainId);
+    if (members.length <= 1) {
+      return `
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">진화 정보</h4>
+          <p class="text-xs text-slate-400 font-medium">진화 단계가 없는 단일 포켓몬입니다.</p>
+        </div>
+      `;
+    }
+
+    // 진화 계통 트리 분석
+    const root = members.find(p => !p.fromId) || members[0];
+    const stage2 = members.filter(p => p.fromId === root.id);
+    const stage2Ids = new Set(stage2.map(p => p.id));
+    const stage3 = members.filter(p => stage2Ids.has(p.fromId));
+
+    // 미니 카드 컴포넌트 렌더러
+    const renderMiniCard = (p) => {
+      const isCurrent = p.id === basic.id;
+      const formattedId = `#${p.id.toString().padStart(4, '0')}`;
+      const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`;
+      const primaryType = p.types[0]?.en || 'normal';
+      const typeKo = p.types[0]?.ko || '';
+
+      return `
+        <button type="button" 
+                class="evo-jump-btn group/evo relative flex flex-col items-center p-2 sm:p-2.5 rounded-2xl transition-all duration-200 cursor-pointer ${
+                  isCurrent 
+                    ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-950/40 shadow-sm' 
+                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-red-400 hover:scale-105 shadow-sm'
+                }" data-id="${p.id}" title="${p.name} 도감 보기">
+          ${isCurrent ? '<span class="absolute -top-2 px-1.5 py-0.2 rounded-full text-[9px] font-black bg-red-500 text-white shadow-xs">현재</span>' : ''}
+          <div class="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-1">
+            <img src="${imgUrl}" 
+                 class="w-11 h-11 sm:w-14 sm:h-14 object-contain filter drop-shadow-sm group-hover/evo:scale-110 transition-transform" 
+                 alt="${p.name}" 
+                 loading="lazy" />
+          </div>
+          <span class="font-mono text-[10px] text-slate-400 font-semibold leading-tight">${formattedId}</span>
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[70px] sm:max-w-[85px] leading-tight mt-0.5">${p.name}</span>
+          <span class="type-badge type-${primaryType} text-[9px] px-1.5 py-0 mt-1">${typeKo}</span>
+        </button>
+      `;
+    };
+
+    // 진화 화살표 및 조건 뱃지
+    const renderArrow = (condition) => `
+      <div class="flex flex-col items-center justify-center px-1 text-slate-400 shrink-0">
+        <span class="text-[10px] font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-900/50 mb-0.5 whitespace-nowrap shadow-xs">
+          ${condition || '진화'}
+        </span>
+        <svg class="w-4 h-4 stroke-current text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </div>
+    `;
+
+    // 분기 진화 (예: 이브이 등 3개 이상 분기)
+    if (stage2.length > 2) {
+      return `
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">진화 과정 (다양한 분기 진화)</h4>
+            <span class="text-[10px] text-slate-400 font-medium">터치 시 이동 👆</span>
+          </div>
+          <div class="flex flex-col items-center gap-3">
+            <div class="shrink-0 mb-1">
+              ${renderMiniCard(root)}
+            </div>
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 w-full">
+              ${stage2.map(p => `
+                <div class="flex flex-col items-center">
+                  <span class="text-[9px] font-bold text-red-500 dark:text-red-400 mb-1 truncate max-w-full">${p.condition || '진화'}</span>
+                  ${renderMiniCard(p)}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 일반 2~3단계 선형 진화
+    let chainFlowHtml = renderMiniCard(root);
+
+    if (stage2.length > 0) {
+      stage2.forEach(s2 => {
+        chainFlowHtml += renderArrow(s2.condition);
+        chainFlowHtml += renderMiniCard(s2);
+
+        const childStage3 = stage3.filter(s3 => s3.fromId === s2.id);
+        childStage3.forEach(s3 => {
+          chainFlowHtml += renderArrow(s3.condition);
+          chainFlowHtml += renderMiniCard(s3);
+        });
+      });
+    }
+
+    return `
+      <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">진화 과정</h4>
+          <span class="text-[10px] text-slate-400 font-medium">터치 시 이동 👆</span>
+        </div>
+        <div class="flex items-center justify-center gap-1.5 sm:gap-3 overflow-x-auto py-2 scrollbar-none">
+          ${chainFlowHtml}
+        </div>
+      </div>
+    `;
+  }
+
   renderModalContent(basic, details) {
     const formattedId = `#${basic.id.toString().padStart(4, '0')}`;
     const imgUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${basic.id}.png`;
@@ -663,6 +784,7 @@ class PokedexApp {
     // 종족값 총합 계산
     const statTotal = details.stats.reduce((acc, s) => acc + s.base, 0);
     const koCryPhrase = getKoreanPokemonCryText(basic.name);
+    const evolutionHtml = this.buildEvolutionHtml(basic);
 
     const statsHtml = details.stats.map(s => {
       const info = STAT_LABELS[s.key] || { name: s.key, color: '#64748b' };
@@ -751,6 +873,9 @@ class PokedexApp {
           </div>
         </div>
 
+        <!-- 진화 과정 섹션 -->
+        ${evolutionHtml}
+
 
       </div>
     `;
@@ -787,6 +912,17 @@ class PokedexApp {
     if (touchArea) {
       touchArea.addEventListener('click', triggerPokemonReaction);
     }
+
+    // 진화 체인 내 미니 카드 클릭 시 해당 포켓몬으로 즉시 이동
+    this.modalBody.querySelectorAll('.evo-jump-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetId = parseInt(btn.dataset.id, 10);
+        if (targetId && targetId !== basic.id) {
+          this.openDetailModal(targetId);
+        }
+      });
+    });
   }
 }
 
