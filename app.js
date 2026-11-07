@@ -819,19 +819,19 @@ class PokedexApp {
 
     this.modalBody.innerHTML = `
       <!-- 모달 상단 헤더 및 일러스트 영역 -->
-      <div class="relative p-6 flex flex-col items-center overflow-hidden" 
+      <div class="relative p-4 sm:p-6 flex flex-col items-center overflow-hidden" 
            style="background: radial-gradient(circle at 50% 60%, ${accentColor}25 0%, transparent 75%)">
         
         <div class="flex items-center gap-2 mb-1">
-          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+          <span class="font-mono text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
             ${formattedId}
           </span>
           <span class="text-xs text-slate-400 font-medium">${basic.genus || basic.enName}</span>
         </div>
 
-        <h2 class="text-2xl font-black text-slate-900 dark:text-white mb-2">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mb-2 text-center">
           ${basic.name}
-          <span class="text-sm font-normal text-slate-400 ml-1">(${basic.enName})</span>
+          <span class="text-xs sm:text-sm font-normal text-slate-400 ml-1 block sm:inline">(${basic.enName})</span>
         </h2>
 
         <!-- 타입 뱃지 -->
@@ -857,7 +857,7 @@ class PokedexApp {
         </p>
       </div>
 <!-- 모달 본문 상세 내용 -->
-      <div class="p-6 space-y-5">
+      <div class="p-4 sm:p-6 space-y-4 sm:space-y-5">
         
         <!-- 도감 설명 -->
         <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">

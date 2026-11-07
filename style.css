@@ -71,6 +71,8 @@ body {
   line-height: 1.5;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: hidden;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
 /* 스크롤바 커스텀 */
@@ -423,6 +425,44 @@ body {
 
 .pokemon-jumping {
   animation: pokemonHappyJump 0.45s ease-out;
+}
+
+/* ==========================================================================
+   스마트폰 모바일 반응형 뷰 최적화 (320px ~ 640px)
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* 카드 여백 및 폰트 축소 */
+  .poke-card {
+    padding: 12px;
+    border-radius: 16px;
+  }
+  
+  .poke-card .type-badge {
+    padding: 2px 7px;
+    font-size: 0.6875rem;
+  }
+
+  /* 세대 탭 및 타입 버튼 패딩 슬림화 */
+  .gen-tab {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .type-btn {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  /* 모달 패딩 */
+  .modal-overlay {
+    padding: 12px;
+  }
+
+  .modal-content {
+    border-radius: 20px;
+    max-height: 94vh;
+  }
 }
 
 /* 부드러운 스크롤 */
